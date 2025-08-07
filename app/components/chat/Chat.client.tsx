@@ -65,15 +65,12 @@ export function Chat() {
           );
         }}
         icon={({ type }) => {
-          /**
-           * @todo Handle more types if we need them. This may require extra color palettes.
-           */
           switch (type) {
             case 'success': {
-              return <div className="i-ph:check-bold text-bolt-elements-icon-success text-2xl" />;
+              return <div className="i-ph:check-bold text-green-500 text-2xl" />;
             }
             case 'error': {
-              return <div className="i-ph:warning-circle-bold text-bolt-elements-icon-error text-2xl" />;
+              return <div className="i-ph:warning-circle-bold text-red-500 text-2xl" />;
             }
           }
 
@@ -212,8 +209,6 @@ export const ChatImpl = memo(
     useEffect(() => {
       const prompt = searchParams.get('prompt');
 
-      // console.log(prompt, searchParams, model, provider);
-
       if (prompt) {
         setSearchParams({});
         runAnimation();
@@ -321,7 +316,6 @@ export const ChatImpl = memo(
           provider: provider.name,
         });
 
-        // Create API error alert
         setLlmErrorAlert({
           type: 'error',
           title,
@@ -366,76 +360,39 @@ export const ChatImpl = memo(
       setChatStarted(true);
     };
 
-    // Helper function to create message parts array from text and images
     const createMessageParts = (text: string, images: string[] = []): Array<TextUIPart | FileUIPart> => {
-      // Create an array of properly typed message parts
-      const parts: Array<TextUIPart | FileUIPart> = [
-        {
-          type: 'text',
-          text,
-        },
-      ];
-
-      // Add image parts if any
+      const parts: Array<TextUIPart | FileUIPart> = [{ type: 'text', text }];
       images.forEach((imageData) => {
-        // Extract correct MIME type from the data URL
         const mimeType = imageData.split(';')[0].split(':')[1] || 'image/jpeg';
-
-        // Create file part according to AI SDK format
-        parts.push({
-          type: 'file',
-          mimeType,
-          data: imageData.replace(/^data:image\/[^;]+;base64,/, ''),
-        });
+        parts.push({ type: 'file', mimeType, data: imageData.replace(/^data:image\/[^;]+;base64,/, '') });
       });
-
       return parts;
     };
 
-    // Helper function to convert File[] to Attachment[] for AI SDK
     const filesToAttachments = async (files: File[]): Promise<Attachment[] | undefined> => {
-      if (files.length === 0) {
-        return undefined;
-      }
-
-      const attachments = await Promise.all(
+      if (files.length === 0) return undefined;
+      return await Promise.all(
         files.map(
           (file) =>
             new Promise<Attachment>((resolve) => {
               const reader = new FileReader();
-
-              reader.onloadend = () => {
-                resolve({
-                  name: file.name,
-                  contentType: file.type,
-                  url: reader.result as string,
-                });
-              };
+              reader.onloadend = () => resolve({ name: file.name, contentType: file.type, url: reader.result as string });
               reader.readAsDataURL(file);
             }),
         ),
       );
-
-      return attachments;
     };
 
     const sendMessage = async (_event: React.UIEvent, messageInput?: string) => {
       const messageContent = messageInput || input;
-
-      if (!messageContent?.trim()) {
-        return;
-      }
-
+      if (!messageContent?.trim()) return;
       if (isLoading) {
         abort();
         return;
       }
 
       let finalMessageContent = messageContent;
-
       if (selectedElement) {
-        console.log('Selected Element:', selectedElement);
-
         const elementInfo = `<div class=\"__boltSelectedElement__\" data-element='${JSON.stringify(selectedElement)}'>${JSON.stringify(`${selectedElement.displayText}`)}</div>`;
         finalMessageContent = messageContent + elementInfo;
       }
@@ -444,163 +401,73 @@ export const ChatImpl = memo(
 
       if (!chatStarted) {
         setFakeLoading(true);
-
         if (autoSelectTemplate) {
-          const { template, title } = await selectStarterTemplate({
-            message: finalMessageContent,
-            model,
-            provider,
-          });
-
+          const { template, title } = await selectStarterTemplate({ message: finalMessageContent, model, provider });
           if (template !== 'blank') {
-            const temResp = await getTemplates(template, title).catch((e) => {
-              if (e.message.includes('rate limit')) {
-                toast.warning('Rate limit exceeded. Skipping starter template\n Continuing with blank template');
-              } else {
-                toast.warning('Failed to import starter template\n Continuing with blank template');
-              }
-
-              return null;
-            });
-
+            const temResp = await getTemplates(template, title).catch(() => null);
             if (temResp) {
               const { assistantMessage, userMessage } = temResp;
               const userMessageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${finalMessageContent}`;
-
               setMessages([
-                {
-                  id: `1-${new Date().getTime()}`,
-                  role: 'user',
-                  content: userMessageText,
-                  parts: createMessageParts(userMessageText, imageDataList),
-                },
-                {
-                  id: `2-${new Date().getTime()}`,
-                  role: 'assistant',
-                  content: assistantMessage,
-                },
-                {
-                  id: `3-${new Date().getTime()}`,
-                  role: 'user',
-                  content: `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${userMessage}`,
-                  annotations: ['hidden'],
-                },
+                { id: `1-${new Date().getTime()}`, role: 'user', content: userMessageText, parts: createMessageParts(userMessageText, imageDataList) },
+                { id: `2-${new Date().getTime()}`, role: 'assistant', content: assistantMessage },
+                { id: `3-${new Date().getTime()}`, role: 'user', content: `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${userMessage}`, annotations: ['hidden'] },
               ]);
-
-              const reloadOptions =
-                uploadedFiles.length > 0
-                  ? { experimental_attachments: await filesToAttachments(uploadedFiles) }
-                  : undefined;
-
+              const reloadOptions = uploadedFiles.length > 0 ? { experimental_attachments: await filesToAttachments(uploadedFiles) } : undefined;
               reload(reloadOptions);
               setInput('');
               Cookies.remove(PROMPT_COOKIE_KEY);
-
               setUploadedFiles([]);
               setImageDataList([]);
-
               resetEnhancer();
-
               textareaRef.current?.blur();
               setFakeLoading(false);
-
               return;
             }
           }
         }
-
-        // If autoSelectTemplate is disabled or template selection failed, proceed with normal message
         const userMessageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${finalMessageContent}`;
         const attachments = uploadedFiles.length > 0 ? await filesToAttachments(uploadedFiles) : undefined;
-
-        setMessages([
-          {
-            id: `${new Date().getTime()}`,
-            role: 'user',
-            content: userMessageText,
-            parts: createMessageParts(userMessageText, imageDataList),
-            experimental_attachments: attachments,
-          },
-        ]);
+        setMessages([{ id: `${new Date().getTime()}`, role: 'user', content: userMessageText, parts: createMessageParts(userMessageText, imageDataList), experimental_attachments: attachments }]);
         reload(attachments ? { experimental_attachments: attachments } : undefined);
         setFakeLoading(false);
         setInput('');
         Cookies.remove(PROMPT_COOKIE_KEY);
-
         setUploadedFiles([]);
         setImageDataList([]);
-
         resetEnhancer();
-
         textareaRef.current?.blur();
-
         return;
       }
 
-      if (error != null) {
-        setMessages(messages.slice(0, -1));
-      }
-
+      if (error != null) setMessages(messages.slice(0, -1));
       const modifiedFiles = workbenchStore.getModifiedFiles();
-
       chatStore.setKey('aborted', false);
 
       if (modifiedFiles !== undefined) {
         const userUpdateArtifact = filesToArtifacts(modifiedFiles, `${Date.now()}`);
         const messageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${userUpdateArtifact}${finalMessageContent}`;
-
-        const attachmentOptions =
-          uploadedFiles.length > 0 ? { experimental_attachments: await filesToAttachments(uploadedFiles) } : undefined;
-
-        append(
-          {
-            role: 'user',
-            content: messageText,
-            parts: createMessageParts(messageText, imageDataList),
-          },
-          attachmentOptions,
-        );
-
+        const attachmentOptions = uploadedFiles.length > 0 ? { experimental_attachments: await filesToAttachments(uploadedFiles) } : undefined;
+        append({ role: 'user', content: messageText, parts: createMessageParts(messageText, imageDataList) }, attachmentOptions);
         workbenchStore.resetAllFileModifications();
       } else {
         const messageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${finalMessageContent}`;
-
-        const attachmentOptions =
-          uploadedFiles.length > 0 ? { experimental_attachments: await filesToAttachments(uploadedFiles) } : undefined;
-
-        append(
-          {
-            role: 'user',
-            content: messageText,
-            parts: createMessageParts(messageText, imageDataList),
-          },
-          attachmentOptions,
-        );
+        const attachmentOptions = uploadedFiles.length > 0 ? { experimental_attachments: await filesToAttachments(uploadedFiles) } : undefined;
+        append({ role: 'user', content: messageText, parts: createMessageParts(messageText, imageDataList) }, attachmentOptions);
       }
 
       setInput('');
       Cookies.remove(PROMPT_COOKIE_KEY);
-
       setUploadedFiles([]);
       setImageDataList([]);
-
       resetEnhancer();
-
       textareaRef.current?.blur();
     };
 
-    /**
-     * Handles the change event for the textarea and updates the input state.
-     * @param event - The change event from the textarea.
-     */
     const onTextareaChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
       handleInputChange(event);
     };
 
-    /**
-     * Debounced function to cache the prompt in cookies.
-     * Caches the trimmed value of the textarea input after a delay to optimize performance.
-     */
     const debouncedCachePrompt = useCallback(
       debounce((event: React.ChangeEvent<HTMLTextAreaElement>) => {
         const trimmedValue = event.target.value.trim();
@@ -611,10 +478,7 @@ export const ChatImpl = memo(
 
     useEffect(() => {
       const storedApiKeys = Cookies.get('apiKeys');
-
-      if (storedApiKeys) {
-        setApiKeys(JSON.parse(storedApiKeys));
-      }
+      if (storedApiKeys) setApiKeys(JSON.parse(storedApiKeys));
     }, []);
 
     const handleModelChange = (newModel: string) => {
@@ -655,26 +519,11 @@ export const ChatImpl = memo(
         importChat={importChat}
         exportChat={exportChat}
         messages={messages.map((message, i) => {
-          if (message.role === 'user') {
-            return message;
-          }
-
-          return {
-            ...message,
-            content: parsedMessages[i] || '',
-          };
+          if (message.role === 'user') return message;
+          return { ...message, content: parsedMessages[i] || '' };
         })}
         enhancePrompt={() => {
-          enhancePrompt(
-            input,
-            (input) => {
-              setInput(input);
-              scrollTextArea();
-            },
-            model,
-            provider,
-            apiKeys,
-          );
+          enhancePrompt(input, (input) => { setInput(input); scrollTextArea(); }, model, provider, apiKeys);
         }}
         uploadedFiles={uploadedFiles}
         setUploadedFiles={setUploadedFiles}

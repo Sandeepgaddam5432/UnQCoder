@@ -25,7 +25,6 @@ interface UserMessageProps {
 export function UserMessage({ content, parts }: UserMessageProps) {
   const profile = useStore(profileStore);
 
-  // Extract images from parts - look for file parts with image mime types
   const images =
     parts?.filter(
       (part): part is FileUIPart => part.type === 'file' && 'mimeType' in part && part.mimeType.startsWith('image/'),
@@ -47,15 +46,15 @@ export function UserMessage({ content, parts }: UserMessageProps) {
                 loading="eager"
                 decoding="sync"
               />
-              <span className="text-bolt-elements-textPrimary text-sm">
+              <span className="text-[var(--text-primary)] text-sm">
                 {profile?.username ? profile.username : ''}
               </span>
             </div>
           ) : (
-            <div className="i-ph:user-fill text-accent-500 text-2xl" />
+            <div className="i-ph:user-fill text-[var(--accent-primary)] text-2xl" />
           )}
         </div>
-        <div className="flex flex-col gap-4 bg-accent-500/10 backdrop-blur-sm p-3 py-3 w-auto rounded-lg mr-auto">
+        <div className="flex flex-col gap-4 bg-[var(--accent-background)] backdrop-blur-sm p-3 py-3 w-auto rounded-lg mr-auto">
           {textContent && <Markdown html>{textContent}</Markdown>}
           {images.map((item, index) => (
             <img
@@ -74,10 +73,10 @@ export function UserMessage({ content, parts }: UserMessageProps) {
   const textContent = stripMetadata(content);
 
   return (
-    <div className="flex flex-col bg-accent-500/10 backdrop-blur-sm px-5 p-3.5 w-auto rounded-lg ml-auto">
+    <div className="flex flex-col bg-[var(--accent-background)] backdrop-blur-sm px-5 p-3.5 w-auto rounded-lg ml-auto">
       <div className="flex gap-3.5 mb-4">
         {images.map((item, index) => (
-          <div className="relative flex rounded-lg border border-bolt-elements-borderColor overflow-hidden">
+          <div className="relative flex rounded-lg border border-[var(--border-color)] overflow-hidden">
             <div className="h-16 w-16 bg-transparent outline-none">
               <img
                 key={index}

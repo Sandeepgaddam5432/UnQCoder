@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Inter:wght@400;500;700&display=swap');
+
 @use 'variables.scss';
 @use 'z-index.scss';
 @use 'animations.scss';
@@ -11,17 +13,18 @@ html,
 body {
   height: 100%;
   width: 100%;
-  background-color: var(--bolt-elements-bg-depth-1);
+  background-color: var(--main-background);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-:root {
-  --gradient-opacity: 0.8;
-  --primary-color: rgba(158, 117, 240, var(--gradient-opacity));
-  --secondary-color: rgba(138, 43, 226, var(--gradient-opacity));
-  --accent-color: rgba(128, 59, 239, var(--gradient-opacity));
-  // --primary-color: rgba(147, 112, 219, var(--gradient-opacity));
-  // --secondary-color: rgba(138, 43, 226, var(--gradient-opacity));
-  // --accent-color: rgba(180, 170, 220, var(--gradient-opacity));
+code,
+pre {
+  font-family: 'Fira Code', monospace;
 }
 
 .modern-scrollbar {
@@ -38,36 +41,31 @@ body {
   }
 
   &::-webkit-scrollbar-thumb {
-    // Use CSS variables for colors
-    background-color: var(--modern-scrollbar-thumb-background);
-    border-radius: 9999px; // pill shape
-    border: 2px solid transparent; // for padding-like effect
+    background-color: var(--surface-b);
+    border-radius: 9999px;
+    border: 2px solid transparent;
     background-clip: content-box;
-    transition: background-color 0.2s ease-in-out; // Add transition
+    transition: background-color 0.2s ease-in-out;
   }
 
   &::-webkit-scrollbar-thumb:hover {
-    // Use CSS variable for hover color
-    background-color: var(--modern-scrollbar-thumb-backgroundHover);
+    background-color: var(--text-tertiary);
   }
 
   // Firefox support
   scrollbar-width: thin;
-  // Use CSS variables for Firefox colors
-  scrollbar-color: var(--modern-scrollbar-thumb-backgroundHover) transparent; // Use hover color for thumb for consistency
+  scrollbar-color: var(--text-tertiary) transparent;
 }
 
 .modern-scrollbar-invert {
   &::-webkit-scrollbar-thumb {
-    // Override with a contrasting color, e.g., primary text color with transparency
-    background-color: color-mix(in srgb, var(--bolt-elements-textPrimary), transparent 70%);
+    background-color: color-mix(in srgb, var(--text-primary), transparent 70%);
   }
 
   &::-webkit-scrollbar-thumb:hover {
-    // Darker/more opaque version on hover
-    background-color: color-mix(in srgb, var(--bolt-elements-textPrimary), transparent 50%);
+    background-color: color-mix(in srgb, var(--text-primary), transparent 50%);
   }
 
   // Firefox support for inverted colors
-  scrollbar-color: color-mix(in srgb, var(--bolt-elements-textPrimary), transparent 50%) transparent;
+  scrollbar-color: color-mix(in srgb, var(--text-primary), transparent 50%) transparent;
 }

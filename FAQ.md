@@ -1,9 +1,9 @@
 # Frequently Asked Questions (FAQ)
 
 <details>
-<summary><strong>What are the best models for bolt.diy?</strong></summary>
+<summary><strong>What are the best models for UnQCoder?</strong></summary>
 
-For the best experience with bolt.diy, we recommend using the following models:
+For the best experience with UnQCoder, we recommend using the following models:
 
 - **Claude 3.5 Sonnet (old)**: Best overall coder, providing excellent results across all use cases
 - **Gemini 2.0 Flash**: Exceptional speed while maintaining good performance
@@ -16,7 +16,6 @@ For the best experience with bolt.diy, we recommend using the following models:
 </details>
 
 <details>
-<summary><strong>How do I get the best results with bolt.diy?</strong></summary>
 
 - **Be specific about your stack**:  
   Mention the frameworks or libraries you want to use (e.g., Astro, Tailwind, ShadCN) in your initial prompt. This ensures that bolt.diy scaffolds the project according to your preferences.
